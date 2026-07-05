@@ -1,18 +1,73 @@
-__pycache__
-.claude
-.cursor
-.pytest_cache
-.ruff_cache
-.serena
-.venv
-agent_workspace
+# ── Secrets & Credentials ─────────────────────────────────────────────────────
 .env
-/logs/
-server.log
-/server.*.log
-debug-*.log
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+wheels/
+sdist/
+develop-eggs/
+lib/
+lib64/
+parts/
+var/
+htmlcov/
 .coverage
-llama_cache
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+
+# ── uv ────────────────────────────────────────────────────────────────────────
+.venv/
+.python-version
+
+# ── Testing & Linting ─────────────────────────────────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ty_cache/
 .smoke-results
-.vscode
-server.*
+junit.xml
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+server.log
+server.*.log
+debug-*.log
+
+# ── Local model cache ─────────────────────────────────────────────────────────
+llama_cache/
+
+# ── AI / IDE workspaces ───────────────────────────────────────────────────────
+.claude/
+.cursor/
+.serena/
+.vscode/
+.idea/
+agent_workspace/
+*.DS_Store
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.bak
+*.swp
+*.swo
+*.tmp
