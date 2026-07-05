@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # =============================================================================
@@ -92,7 +92,10 @@ class SystemContent(_AnthropicBlockBase):
 # Message Types
 # =============================================================================
 class Message(BaseModel):
-    role: Literal["user", "assistant"]
+    # Accept "system" so Claude Code messages that embed a system turn
+    # inside the messages array pass Pydantic validation. The service layer
+    # hoists these into the top-level ``system`` field before forwarding.
+    role: Literal["user", "assistant", "system"]
     content: (
         str
         | list[
@@ -139,6 +142,48 @@ class MessagesRequest(BaseModel):
     max_tokens: int | None = None
     messages: list[Message]
     system: str | list[SystemContent] | None = None
+
+    @model_validator(mode="after")
+    def _hoist_system_messages(self) -> MessagesRequest:
+        """Move system-role messages from the messages list into the system field.
+
+        Some Claude Code versions embed system turns inside the messages array
+        instead of the top-level system parameter. The Anthropic spec (and all
+        provider transports) expect system content at the top level only.
+        """
+        system_msgs = [m for m in self.messages if m.role == "system"]
+        if not system_msgs:
+            return self
+
+        # Collect text from all system-role messages.
+        extra_system_texts: list[str] = []
+        for msg in system_msgs:
+            if isinstance(msg.content, str):
+                extra_system_texts.append(msg.content)
+            else:
+                extra_system_texts.extend(
+                    block.text
+                    for block in msg.content
+                    if isinstance(block, ContentBlockText)
+                )
+
+        if extra_system_texts:
+            extra_text = "\n".join(extra_system_texts)
+            if self.system is None:
+                self.system = extra_text
+            elif isinstance(self.system, str):
+                self.system = self.system + "\n" + extra_text
+            else:
+                # list[SystemContent] — append a new block
+                self.system = [
+                    *self.system,
+                    SystemContent(type="text", text=extra_text),
+                ]
+
+        # Drop system-role messages from the list.
+        self.messages = [m for m in self.messages if m.role != "system"]
+        return self
+
     stop_sequences: list[str] | None = None
     stream: bool | None = True
     temperature: float | None = None
